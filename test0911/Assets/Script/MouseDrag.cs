@@ -42,37 +42,26 @@ public class MouseDrag : MonoBehaviour
         Physics.Raycast(clickRay, out posPoint, Mathf.Infinity, mask.value);
         Vector3 mouseMove = posPoint.point;
         transform.position = (new Vector3(mouseMove.x, transform.position.y, mouseMove.z));
+        Vector3 terrainLocalPos = transform.position - ter.transform.position;  //物件在地形上的相对位置
+        Vector2 controlPos = new Vector2(terrainLocalPos.x / ter.terrainData.size.x * ter.terrainData.heightmapWidth, terrainLocalPos.z / ter.terrainData.size.z * ter.terrainData.heightmapHeight);
         for (int x1 = 0; x1 < ter.terrainData.size.x; x1++)   //遍历所有点
         {
             for (int z1 = 0; z1 < ter.terrainData.size.z; z1++)
             {
-              //  Debug.Log("球坐标 =" + x1 + "," + z1);
-                if (Vector3.Distance(transform.position, new Vector3(x1, 6, z1)) < r)
+
+                if (Mathf.Abs(x1 - controlPos.x) <= r && Mathf.Abs(z1 - controlPos.y) <= r)  //首先缩小范围
                 {
-                    float powDis = Vector3.Distance(transform.position, new Vector3(x1, 6, z1));// Mathf.Pow((x1 - transform.position.x), 2) - Mathf.Pow((z1 - transform.position.z), 2); //当前点与原点的距离的平方
+                    float powDis = Mathf.Pow((x1 - controlPos.x), 2) - Mathf.Pow((z1 - controlPos.y), 2); ///当前点与原点的距离的平方
                     float powr = Mathf.Pow(r, 2);
-
-                    float sinkHeight; //要降低的高度
-                    float oldHeight = ter.terrainData.GetHeight(x1, z1);//输出的是介于0到1之间的高度
-                    sinkHeight = Mathf.Sqrt(powr - powDis);
-                    float[,] newHeightData = new float[1, 1] { { (oldHeight / ter.terrainData.heightmapScale.y - sinkHeight) } };  //新的高度值
-                    ter.terrainData.SetHeights(x1, z1, newHeightData);  //设定新的高度值
-
+                    if (powDis <= powr)    ///再次缩小范围if (Vector3.Distance(transform.position, new Vector3(x1, 6, z1)) < r)   //Vector3.Distance(transform.position, new Vector3(x1, 6, z1)) 
+                    {
+                        float sinkHeight; //要降低的高度
+                        float oldHeight = ter.terrainData.GetHeight(x1, z1);//输出的是介于0到1之间的高度
+                        sinkHeight = Mathf.Sqrt(powr - powDis);
+                        float[,] newHeightData = new float[1, 1] { { (oldHeight - sinkHeight) / ter.terrainData.heightmapScale.y } };  //新的高度值
+                        ter.terrainData.SetHeights(x1, z1, newHeightData);  //设定新的高度值
+                    }
                 }
-
-                //if(Mathf.Abs(x1-transform.position.x)<=r&&Mathf.Abs(z1-transform.position.z)<=r)  //首先缩小范围
-                //   {  
-                //           float powDis = Mathf.Pow((x1-transform.position.x),2)-Mathf.Pow((z1-transform.position.z),2); //当前点与原点的距离的平方
-                //           float powr = Mathf.Pow(r, 2);
-                //           if( powDis <= powr) //再次缩小范围
-                //             {
-                //                float sinkHeight; //要降低的高度
-                //                float oldHeight = ter.terrainData.GetHeight( x1, z1 );//输出的是介于0到1之间的高度
-                //                sinkHeight=Mathf.Sqrt(powr - powDis);
-                //                float[,] newHeightData = new float[1,1] { { ( oldHeight / ter.terrainData.heightmapScale.y - sinkHeight)} };  //新的高度值
-                //                ter.terrainData.SetHeights( x1 , z1 , newHeightData );  //设定新的高度值
-                //               }
-                //    }
             }
         }
         return;
